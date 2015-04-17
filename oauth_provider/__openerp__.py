@@ -5,7 +5,7 @@
     'category' : 'SaaS',
     'website' : 'https://it-projects.info',
 
-    'depends' : ['web'],
+    'depends' : ['web', 'auth_oauth'],
     'data':[],
     'installable': True,
 

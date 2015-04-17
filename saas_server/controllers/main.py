@@ -7,6 +7,7 @@ from openerp.addons.web.http import request
 from openerp.addons.auth_oauth.controllers.main import fragment_to_query_string
 from openerp.addons.web.controllers.main import db_monodb
 from openerp.addons.saas_utils import connector
+
 import re
 
 import werkzeug.utils
@@ -19,11 +20,9 @@ _logger = logging.getLogger(__name__)
 
 class SaasServer(http.Controller):
 
-    @http.route('/saas_server/new_database', type='http', auth='public')
+    @http.route('/saas_server/new_database', type='http', auth='user')
     @fragment_to_query_string
     def new_database(self, **post):
-        _logger.info('new_database post: %s', post)
-
         state = simplejson.loads(post.get('state'))
         new_db = state.get('d')
         template_db = self.get_template(state)
@@ -31,7 +30,9 @@ class SaasServer(http.Controller):
         access_token = post['access_token']
         saas_oauth_provider = request.registry['ir.model.data'].xmlid_to_object(request.cr, SUPERUSER_ID, 'saas_server.saas_oauth_provider')
 
-        admin_data = request.registry['res.users']._auth_oauth_rpc(request.cr, SUPERUSER_ID, saas_oauth_provider.validation_endpoint, access_token)
+        #admin_data = request.registry['res.users']._auth_oauth_rpc(request.cr, SUPERUSER_ID, saas_oauth_provider.data_endpoint, access_token)
+        admin_data = simplejson.loads (post['admin_data'])
+
         if admin_data.get("error"):
             raise Exception(admin_data['error'])
         client_id = admin_data.get('client_id')
@@ -149,6 +150,9 @@ class SaasServer(http.Controller):
     def update_user_and_partner(self, database):
         user_model = request.registry.get('res.users')
         user = user_model.browse(request.cr, SUPERUSER_ID, request.uid)
+
+        _logger.info ('\n\nFetiching user %s with uid = %s\n', user, request.uid)
+
         partner_model = request.registry.get('res.partner')
         wals = {
             'name': user.organization,

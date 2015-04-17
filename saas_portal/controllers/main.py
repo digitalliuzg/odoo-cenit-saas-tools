@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 import openerp
 from openerp import SUPERUSER_ID
+from openerp.addons.auth_oauth.controllers import main as oauth
 from openerp.addons.web import http
 from openerp.addons.web.http import request
-from openerp.addons.auth_oauth.controllers import main as oauth
+
 import werkzeug
 import simplejson
 import uuid
@@ -46,8 +47,10 @@ class SaasPortal(http.Controller):
 
     def get_provider(self):
         imd = request.registry['ir.model.data']
-        return imd.xmlid_to_object(request.cr, SUPERUSER_ID,
-                                   'saas_server.saas_oauth_provider')
+        return imd.xmlid_to_object (
+            request.cr, SUPERUSER_ID,
+            'saas_server.saas_oauth_provider'
+        )
 
     def get_new_client_id(self, name):
         return str(uuid.uuid1())
@@ -58,7 +61,9 @@ class SaasPortal(http.Controller):
         return config.get_param(request.cr, SUPERUSER_ID, full_param)
 
     def get_full_dbname(self, dbname):
-        full_dbname = '%s.%s' % (dbname, self.get_config_parameter('base_saas_domain'))
+        full_dbname = '%s.%s' % (dbname,
+            self.get_config_parameter('base_saas_domain')
+        )
         return full_dbname.replace('www.', '').replace('.', '_')
 
     def get_saas_server(self):

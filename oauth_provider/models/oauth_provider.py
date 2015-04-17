@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from openerp.osv import osv,fields
-from openerp import SUPERUSER_ID
+from openerp import SUPERUSER_ID, models
+from openerp import fields as field
 from datetime import datetime
 from oauthlib.common import generate_client_id as oauthlib_generate_client_id
 from openerp.tools import DEFAULT_SERVER_DATETIME_FORMAT, DEFAULT_SERVER_DATE_FORMAT
@@ -98,4 +99,11 @@ class oauth_access_token(osv.Model):
 #        'access_token_id':fields.many2one('oauth.access_token', string='Access token'),
 #    }
 
+
+class auth_oauth_provider (models.Model):
+    _inherit = 'auth.oauth.provider'
+
+    return_url = field.Char ('Return URL')
+    response_type = field.Char ('Response Type')
+    client_secret = field.Char ("Client's secret id")
 
