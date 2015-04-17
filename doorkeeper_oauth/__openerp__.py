@@ -23,7 +23,7 @@ This module provides integration with Doorkeeper-specific authorization flows.
     # always loaded
     'data': [
         # 'security/ir.model.access.csv',
-        # 'templates.xml',
+        'templates.xml',
     ],
     # only loaded in demonstration mode
     'demo': [

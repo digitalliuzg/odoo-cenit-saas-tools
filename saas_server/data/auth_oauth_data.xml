@@ -7,10 +7,10 @@
             <field name="scope">userinfo</field>
             <field name="validation_endpoint">http://www.cenitsaas.com/oauth/token</field>
             <field name="data_endpoint">http://www.cenitsaas.com/oauth/token/info</field>
-            <field name="return_url">auth_oauth/cenit</field>
+            <field name="return_url">auth_oauth/doorkeeper_cb</field>
             <field name="response_type">code</field>
             <field name="css_class">cenit saas</field>
-            <field name="body">Cenit Login</field>
+            <field name="body">Login with Cenit</field>
             <field name="enabled" eval="True"/>
         </record>
 	</data>

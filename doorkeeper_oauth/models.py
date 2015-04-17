@@ -21,14 +21,21 @@ import logging
 _logger = logging.getLogger(__name__)
 
 
+
+class auth_oauth_provider (models.Model):
+    _inherit = 'auth.oauth.provider'
+
+    return_url = fields.Char ('Return URL')
+    response_type = fields.Char ('Response Type')
+    client_secret = fields.Char ("Client's secret id")
+
+
 class ResUsers(models.Model):
     _name = 'res.users'
     _inherit = 'res.users'
 
     def __auth_oauth_rpc_post (self, cr, uid, endpoint, data):
         """ performs a POST request to a given endpoint with a given data """
-
-        _logger.info ("\n\nPOSTing: %s", data)
 
         params = werkzeug.url_encode (data)
         req = urllib2.Request (endpoint, params)
@@ -39,14 +46,10 @@ class ResUsers(models.Model):
             raise e
         response = f.read()
 
-        _logger.info ("\n\nRESPONSE: %s", response)
-
         return simplejson.loads(response)
 
     def __auth_oauth_rpc_get (self, cr, uid, endpoint, access_token):
         """ performs a GET request to a given endpoint with a given access_token """
-
-        _logger.info ("\n\nGETing: %s", access_token)
 
         params = werkzeug.url_encode({'access_token': access_token})
         if urlparse.urlparse(endpoint)[4]:
@@ -60,8 +63,6 @@ class ResUsers(models.Model):
             _logger.exception ("\n\nError [%s]\n", e.read())
             raise e
         response = f.read()
-
-        _logger.info ("\n\nRESPONSE: %s", response)
 
         return simplejson.loads(response)
 
@@ -146,33 +147,24 @@ class ResUsers(models.Model):
             This method can be overridden to add alternative signin methods.
         """
         try:
-            _logger.info ("\n\nValidated data:\n%s\n", validation)
-            _logger.info ("\n\nParams:\n%s\n", params)
             oauth_uid = validation['user_id']
-            _logger.info ("\n\nOAuth UID: %s\n", oauth_uid)
-            _logger.info ("\n\nOAuth Provider ID: %s\n", provider)
 
             user_ids = self.search(cr, uid, [
                 ("oauth_uid", "=", oauth_uid),
                 ('oauth_provider_id', '=', provider)
             ])
-            _logger.info ("\n\nUser UIDs: %s\n", user_ids)
 
             if not user_ids:
                 raise openerp.exceptions.AccessDenied()
 
             assert len(user_ids) == 1
 
-            _logger.info ("\n\nloading state\n")
             state = simplejson.loads (params.get('state'))
             if state.get ('td', False):
-                _logger.info ("\n\nOpening registry for: %s\n", state['td'])
                 reg = RegistryManager.get (state['td'])
                 cr = reg.cr
-            _logger.info ("\n\nOpened registry: %s\n", cr.dbname)
             
             user = self.browse(cr, uid, user_ids[0], context=context)
-            _logger.info ("\n\nUser fetched: %s\n", user)
             user.write({'oauth_access_token': params['access_token']})
 
             return cr, user.login
@@ -181,8 +173,6 @@ class ResUsers(models.Model):
                 return None
 
             state = simplejson.loads(params['state'])
-            _logger.info ("\n\nSTATE: %s\n", state)
-            _logger.info ("\n\nVALIDATION: %s\n", validation)
 
             token = state.get('t')
 
@@ -241,7 +231,6 @@ class ResUsers(models.Model):
         # else:
         #   continue with the process
 
-        _logger.info ("\n\nAUTH with params: %s\n", params)
         access_token = params.get ('access_token', False)
         if not access_token:
             access_token = self.__auth_oauth_code (
