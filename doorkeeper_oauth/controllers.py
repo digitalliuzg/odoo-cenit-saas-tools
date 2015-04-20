@@ -4,8 +4,10 @@ from openerp import SUPERUSER_ID
 from openerp.addons.auth_oauth.controllers.main import fragment_to_query_string
 from openerp.addons.web import http
 from openerp.addons.web.controllers.main import db_monodb, ensure_db, set_cookie_and_redirect, login_and_redirect
+from openerp.addons.web.controllers.main import Session
 from openerp.addons.web.http import request
 from openerp.modules.registry import RegistryManager
+
 
 import werkzeug
 import simplejson
@@ -164,3 +166,15 @@ class DoorkeeperOauth (http.Controller):
             assert len(plans) > 0
         
         return plans[0]
+
+
+class SessionController (Session):
+    
+    @http.route('/web/session/logout', type='http', auth="none")
+    def logout(self, redirect='/web'):
+        icp = request.registry.get ('ir.config_parameter')
+        redirect_url = icp.get_param (request.cr, SUPERUSER_ID, 'web.logout.redirect')
+
+        redirect = redirect_url if redirect_url else redirect
+
+        return super(SessionController, self).logout (redirect)

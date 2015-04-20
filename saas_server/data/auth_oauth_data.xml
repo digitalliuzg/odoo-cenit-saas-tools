@@ -13,5 +13,5 @@
             <field name="body">Login with Cenit</field>
             <field name="enabled" eval="True"/>
         </record>
-	</data>
+    </data>
 </openerp>
