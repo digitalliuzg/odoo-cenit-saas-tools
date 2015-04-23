@@ -55,13 +55,18 @@ class DoorkeeperOauth (http.Controller):
             if not master_db:
                 return BadRequest()
                 
-            if state.get('login', False):
+            if state.get ('login', False):
                 login = state['login']
-                db_prefix = state['login'].split('@')[0]
+
+                db_prefix = state['login'].split ('@')[0]
+                if state.get ('demo', False):
+                    db_prefix = "%s-%s" % (db_prefix, 'demo')
+                    
                 dbname = "%s_%s" %(db_prefix, master_db)
                 redirect = "%s://%s.%s" %(proto, db_prefix, root_url)
                 if not redirect.endswith ("/"):
                     redirect += "/"
+
 
             state.update ({'d': dbname})
             kw['state'] = simplejson.dumps (state)
@@ -94,7 +99,6 @@ class DoorkeeperOauth (http.Controller):
                     )
                 )
             else:
-                _logger.info ("No DB: meaning signup")
                 registry = RegistryManager.get (master_db)
 
                 if not state.get ('name', False):
@@ -107,12 +111,16 @@ class DoorkeeperOauth (http.Controller):
                         'organization': db_prefix.capitalize ()
                     })
 
-                if not state.get ('plan', False):
-                    plan = self.get_plan ()
+                if state.get ('demo', False):
+                    plan = self.get_demo_plan ()
                 else:
-                    plan = self.get_plan (state.get ('plan'))
+                    if state.get ('plan', False):
+                        plan = self.get_plan (state.get ('plan'))
+                    else:
+                        plan = self.get_default_plan ()
+
                 state.update ({
-                    'plan': plan['id']
+                    'db_template': plan['template']
                 })
 
                 try:
@@ -149,6 +157,40 @@ class DoorkeeperOauth (http.Controller):
             'saas_server.saas_oauth_provider'
         )
 
+    def get_demo_plan (self):
+        icp = request.registry.get ('ir.config_parameter')
+        name = icp.get_param (
+            request.cr, SUPERUSER_ID, "cenit.plan.demo", default=None
+        )
+        ssp = request.registry.get ('saas_server.plan')
+        conditions = [
+            ('state', '=', 'confirmed'),
+            ('template', '=', name)
+        ]
+
+        plans = ssp.search_read (
+            request.cr, SUPERUSER_ID, conditions
+        )
+        
+        return plans[0]
+
+    def get_default_plan (self):
+        icp = request.registry.get ('ir.config_parameter')
+        name = icp.get_param (
+            request.cr, SUPERUSER_ID, "cenit.plan.default", default=None
+        )
+        ssp = request.registry.get ('saas_server.plan')
+        conditions = [
+            ('state', '=', 'confirmed'),
+            ('template', '=', name)
+        ]
+
+        plans = ssp.search_read (
+            request.cr, SUPERUSER_ID, conditions
+        )
+
+        return plans[0]
+
     def get_plan (self, name=None):
         ssp = request.registry['saas_server.plan']
         conditions = [
@@ -156,6 +198,7 @@ class DoorkeeperOauth (http.Controller):
         ]
         if name is not None:
             conditions.append (('name', '=', name))
+
         plans = ssp.search_read (
             request.cr, SUPERUSER_ID, conditions
         )

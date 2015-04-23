@@ -5,7 +5,7 @@ from openerp import http
 from openerp.addons import auth_signup
 from openerp.addons.web.http import request
 from openerp.addons.auth_oauth.controllers.main import fragment_to_query_string
-from openerp.addons.web.controllers.main import db_monodb
+from openerp.addons.web.controllers.main import db_monodb, Session
 from openerp.addons.saas_utils import connector
 
 import re
@@ -103,7 +103,10 @@ class SaasServer(http.Controller):
             'action': action
             }
         scheme = request.httprequest.scheme
-        return werkzeug.utils.redirect('{scheme}://{domain}/saas_client/new_database?{params}'.format(scheme=scheme, domain=new_db.replace('_', '.'), params=werkzeug.url_encode(params)))
+        redirect = '{scheme}://{domain}/saas_client/new_database?{params}'.format(scheme=scheme, domain=new_db.replace('_', '.'), params=werkzeug.url_encode(params))
+        
+        request.session.logout(keep_db=True)
+        return werkzeug.utils.redirect (redirect)
 
     @http.route(['/saas_server/stats'], type='http', auth='public')
     def stats(self, **post):
@@ -141,17 +144,15 @@ class SaasServer(http.Controller):
         return werkzeug.utils.redirect('{scheme}://{domain}/auth_oauth/signin?{params}'.format(scheme=scheme, domain=domain, params=params))
 
     def get_template(self, state):
-        user_model = request.registry.get('res.users')
-        user = user_model.browse(request.cr, SUPERUSER_ID, request.uid)
-        if user.plan_id and user.plan_id.state == 'confirmed':
-            return user.plan_id.template
+        #~ user_model = request.registry.get('res.users')
+        #~ user = user_model.browse(request.cr, SUPERUSER_ID, request.uid)
+        #~ if user.plan_id and user.plan_id.state == 'confirmed':
+            #~ return user.plan_id.template
         return state.get('db_template')
 
     def update_user_and_partner(self, database):
         user_model = request.registry.get('res.users')
         user = user_model.browse(request.cr, SUPERUSER_ID, request.uid)
-
-        _logger.info ('\n\nFetiching user %s with uid = %s\n', user, request.uid)
 
         partner_model = request.registry.get('res.partner')
         wals = {
